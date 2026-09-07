@@ -1,0 +1,55 @@
+# Firebase App Hosting configuration
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+#
+# App Hosting detecta Next.js automáticamente, compila la app (npm run build)
+# y la ejecuta con SSR sobre Cloud Run. No hace falta `output: standalone`.
+
+runConfig:
+  # Escala a cero cuando no hay tráfico para minimizar costos.
+  # Subí minInstances a 1 si querés evitar cold starts.
+  minInstances: 0
+  maxInstances: 100
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+# Variables de entorno y secretos expuestos al servidor de Next.js.
+# La config no sensible se define acá directamente; las credenciales se
+# guardan en Cloud Secret Manager y se referencian por nombre (ver README).
+env:
+  # --- Config no sensible ---
+  - variable: ATIONET_BASE_URL
+    value: https://api.ationet.com
+    availability:
+      - RUNTIME
+
+  - variable: ATIONET_ENTITY_TYPE
+    value: "N"
+    availability:
+      - RUNTIME
+
+  # --- Credenciales (Cloud Secret Manager) ---
+  # Cargalas con:
+  #   firebase apphosting:secrets:set ationet-username
+  #   firebase apphosting:secrets:set ationet-password
+  #   firebase apphosting:secrets:set ationet-network-id
+  #   firebase apphosting:secrets:set ationet-network-name
+  - variable: ATIONET_USERNAME
+    secret: ationet-username
+    availability:
+      - RUNTIME
+
+  - variable: ATIONET_PASSWORD
+    secret: ationet-password
+    availability:
+      - RUNTIME
+
+  - variable: ATIONET_NETWORK_ID
+    secret: ationet-network-id
+    availability:
+      - RUNTIME
+
+  - variable: ATIONET_NETWORK_NAME
+    secret: ationet-network-name
+    availability:
+      - RUNTIME
