@@ -21,7 +21,9 @@ async function fetchTransactions30d(): Promise<AtiTransaction[]> {
   });
   const res = await fetch(`/api/transactions?${params}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  // /api/transactions devuelve la página de ATIONet { Content, TotalCount, ... }
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.Content ?? []);
 }
 
 function computeSiteStats(txs: AtiTransaction[]): Map<string, SiteStats> {

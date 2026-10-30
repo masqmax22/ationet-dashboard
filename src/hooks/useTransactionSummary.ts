@@ -25,7 +25,9 @@ async function fetchTransactions(dateFrom: string, dateTo: string): Promise<AtiT
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail ?? `HTTP ${res.status}`);
   }
-  return res.json();
+  // /api/transactions devuelve la página de ATIONet { Content, TotalCount, ... }
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.Content ?? []);
 }
 
 function summarize(transactions: AtiTransaction[]): TransactionSummary {
