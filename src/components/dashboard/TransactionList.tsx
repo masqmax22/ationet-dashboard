@@ -31,13 +31,12 @@ function formatDateTime(iso: string) {
   } catch { return { date: iso, time: "" }; }
 }
 
-function ResponseBadge({ code, msg }: { code: string; msg: string }) {
-  const ok = code === "00" || msg?.toLowerCase().includes("aprov") || msg?.toLowerCase().includes("approved");
+function ResponseBadge({ approved, msg }: { approved: boolean; msg: string }) {
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-      ok ? "badge-ok" : "badge-crit"
+      approved ? "badge-ok" : "badge-crit"
     }`}>
-      {ok ? "✓" : "✗"} {ok ? "Aprobada" : (msg?.slice(0, 18) || "Rechazada")}
+      {approved ? "✓ Aprobada" : `✗ ${msg?.slice(0, 18) || "Rechazada"}`}
     </span>
   );
 }
@@ -241,7 +240,7 @@ export function TransactionList() {
                   <th className="text-left">Combustible</th>
                   <th className="text-right">Volumen</th>
                   <th className="text-right">Monto</th>
-                  <th className="text-left">PAN</th>
+                  <th className="text-left">PAN / Vehículo</th>
                   <th className="text-center">Estado</th>
                 </tr>
               </thead>
@@ -279,11 +278,11 @@ export function TransactionList() {
                       </td>
                       <td>
                         <span className="font-mono text-xs text-muted-foreground">
-                          {tx.PAN ? `****${tx.PAN.slice(-4)}` : "—"}
+                          {tx.PAN ? `****${tx.PAN.slice(-4)}` : (tx.VehiclePlate || "—")}
                         </span>
                       </td>
                       <td className="text-center">
-                        <ResponseBadge code={tx.ResponseCode} msg={tx.ResponseMessage} />
+                        <ResponseBadge approved={tx.Approved} msg={tx.ResponseMessage} />
                       </td>
                     </tr>
                   );

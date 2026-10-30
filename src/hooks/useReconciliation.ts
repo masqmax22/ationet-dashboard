@@ -76,8 +76,8 @@ async function fetchReconciliation(dateFrom: string, dateTo: string): Promise<Re
 
     return {
       id: `net-${i}`,
-      tankName: `Tanque ${cat}`,
-      siteName: "Red general",
+      tankName: cat,
+      siteName: "Todos los sitios (red)",
       fuelCode: cat,
       fuelDescription: cat,
       stockInicial,

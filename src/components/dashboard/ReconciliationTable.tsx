@@ -43,8 +43,8 @@ function ReconKPI({
           </div>
         </div>
         <p className="text-2xl font-bold text-foreground tracking-tight leading-none">{total}</p>
-        <p className="text-xs text-muted-foreground mt-1.5">Tanques monitoreados</p>
-        <p className="text-[11px] text-[#116dff] mt-0.5">Red completa</p>
+        <p className="text-xs text-muted-foreground mt-1.5">Combustibles monitoreados</p>
+        <p className="text-[11px] text-[#116dff] mt-0.5">Por tipo · red completa</p>
       </div>
 
       <div className="kpi-card">
@@ -232,7 +232,7 @@ export function ReconciliationTable({ dateFrom, dateTo }: Props) {
           <table className="w-full recon-table">
             <thead>
               <tr>
-                <th className="text-left">Tanque / Sitio</th>
+                <th className="text-left">Combustible / Alcance</th>
                 <th className="text-left">Combustible</th>
                 <th className="text-right">Stock Inicial</th>
                 <th className="text-right">Deliverys</th>

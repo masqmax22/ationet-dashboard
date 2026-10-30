@@ -79,6 +79,10 @@ export interface AtiHealthWidget {
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
+// Forma "limpia" que consume la UI. Los datos crudos de ATIONet se normalizan a
+// esta forma en `mapTransaction` (ver transactions.ts), porque la API real usa
+// nombres de campo distintos (ProductVolumeDispensed, TransactionAmountDispensed,
+// SiteShortName, SiteDateTime, etc.).
 export interface AtiTransaction {
   TransactionId: string;
   AuthorizationCode: string;
@@ -93,10 +97,16 @@ export interface AtiTransaction {
   /** Monetary amount */
   TransactionAmount: number;
   CurrencyCode: string;
+  /** Identificación del medio/vehículo (PAN si existe, o patente/código) */
   PAN: string;
+  VehiclePlate: string;
   ResponseCode: string;
   ResponseMessage: string;
+  Approved: boolean;
 }
+
+/** Transacción cruda de ATIONet (campos reales de /Transactions). */
+export type AtiRawTransaction = Record<string, unknown>;
 
 // ─── Reconciliation (computed) ────────────────────────────────────────────────
 

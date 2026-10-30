@@ -1,6 +1,7 @@
 import { ationetFetch } from "@/lib/ationet/client";
 import { AtiNetError } from "@/lib/ationet/client";
-import type { AtiPage, AtiTransaction } from "@/lib/ationet/types";
+import { mapTransaction } from "@/lib/ationet/transactions";
+import type { AtiPage, AtiRawTransaction } from "@/lib/ationet/types";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -27,8 +28,8 @@ export async function GET(request: Request) {
   if (authCode)  params.AuthorizationCode = authCode;
 
   try {
-    const data = await ationetFetch<AtiPage<AtiTransaction>>("/Transactions", params);
-    return Response.json(data);
+    const data = await ationetFetch<AtiPage<AtiRawTransaction>>("/Transactions", params);
+    return Response.json({ ...data, Content: (data.Content ?? []).map(mapTransaction) });
   } catch (err) {
     if (err instanceof AtiNetError) {
       return Response.json({ error: "Ationet API error", detail: err.message }, { status: 502 });
