@@ -1,4 +1,5 @@
 import { getToken, invalidateToken } from "./auth";
+import { getActiveConfig, type AtiConfig } from "./config";
 
 export class AtiNetError extends Error {
   constructor(
@@ -16,20 +17,22 @@ export async function ationetFetch<T>(
   params?: Record<string, string>,
   options?: RequestInit
 ): Promise<T> {
-  const result = await doFetch<T>(path, params, options, false);
-  return result;
+  // Resolve which client (network) this request targets: the session cookie
+  // (client selected in the Config UI) or the environment default.
+  const config = await getActiveConfig();
+  return doFetch<T>(config, path, params, options, false);
 }
 
 async function doFetch<T>(
+  config: AtiConfig,
   path: string,
   params: Record<string, string> | undefined,
   options: RequestInit | undefined,
   isRetry: boolean
 ): Promise<T> {
-  const token = await getToken();
-  const base = process.env.ATIONET_BASE_URL ?? "https://api.ationet.com";
+  const token = await getToken(config);
 
-  const url = new URL(`${base}${path}`);
+  const url = new URL(`${config.baseUrl}${path}`);
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   }
@@ -53,8 +56,8 @@ async function doFetch<T>(
 
   // If 401 on first attempt, clear cached token and retry once
   if (res.status === 401 && !isRetry) {
-    invalidateToken();
-    return doFetch<T>(path, params, options, true);
+    invalidateToken(config);
+    return doFetch<T>(config, path, params, options, true);
   }
 
   if (!res.ok) {

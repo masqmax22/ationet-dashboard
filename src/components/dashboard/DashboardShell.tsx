@@ -12,14 +12,16 @@ import { TransactionSummary } from "./TransactionSummary";
 import { TransactionList } from "./TransactionList";
 import { ReconciliationTable } from "./ReconciliationTable";
 import { BalanceHealthBanner } from "./BalanceHealthBanner";
+import { ClientConfig } from "./ClientConfig";
 
-type Section = "overview" | "transactions" | "reconciliation" | "sites";
+type Section = "overview" | "transactions" | "reconciliation" | "sites" | "config";
 
 const NAV = [
   { id: "overview" as Section,       icon: LayoutDashboard, label: "Resumen" },
   { id: "transactions" as Section,   icon: ReceiptText,     label: "Transacciones" },
   { id: "reconciliation" as Section, icon: FlaskConical,    label: "Reconciliación" },
   { id: "sites" as Section,          icon: MapPin,          label: "Sitios" },
+  { id: "config" as Section,         icon: Settings,        label: "Configuración" },
 ];
 
 export function DashboardShell() {
@@ -41,6 +43,7 @@ export function DashboardShell() {
     transactions:    { title: "Transacciones", sub: "Despachos del período seleccionado" },
     reconciliation:  { title: "Reconciliación de Combustible", sub: "Diferencias entre volumen esperado y actual" },
     sites:           { title: "Sitios Operativos", sub: "Estado de estaciones en la red" },
+    config:          { title: "Configuración", sub: "Clientes / redes ATIONet y credenciales" },
   };
   const { title, sub } = pageTitles[section];
 
@@ -187,6 +190,12 @@ export function DashboardShell() {
           {section === "sites" && (
             <PageSection title="Sitios Operativos" subtitle="Todas las estaciones en la red">
               <SiteStatusGrid />
+            </PageSection>
+          )}
+
+          {section === "config" && (
+            <PageSection title="Clientes" subtitle="Dirigí el dashboard a una red ATIONet u otra">
+              <ClientConfig />
             </PageSection>
           )}
 

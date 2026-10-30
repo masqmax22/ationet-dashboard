@@ -1,47 +1,50 @@
 import type { AtiTokenResponse } from "./types";
+import type { AtiConfig } from "./config";
 
 interface TokenCache {
   token: string;
   expiresAt: number; // Unix ms
 }
 
-// Module-level singleton — persists across requests in the same Node.js process
-let cache: TokenCache | null = null;
+// Token cache keyed per-client so multiple ATIONet networks can coexist in the
+// same Node.js process (the config is chosen per-request via cookie/env).
+const cacheMap = new Map<string, TokenCache>();
 
-export async function getToken(): Promise<string> {
+function cacheKey(c: AtiConfig): string {
+  return [c.baseUrl, c.username, c.password, c.networkId, c.networkName, c.entityType].join("|");
+}
+
+export async function getToken(config: AtiConfig): Promise<string> {
+  const key = cacheKey(config);
+  const cached = cacheMap.get(key);
   // Refresh 60 seconds before real expiry as a safety buffer
-  if (cache && cache.expiresAt > Date.now() + 60_000) {
-    return cache.token;
+  if (cached && cached.expiresAt > Date.now() + 60_000) {
+    return cached.token;
   }
-  cache = await fetchFreshToken();
-  return cache.token;
+  const fresh = await fetchFreshToken(config);
+  cacheMap.set(key, fresh);
+  return fresh.token;
 }
 
-export function invalidateToken(): void {
-  cache = null;
+export function invalidateToken(config: AtiConfig): void {
+  cacheMap.delete(cacheKey(config));
 }
 
-async function fetchFreshToken(): Promise<TokenCache> {
-  const { ATIONET_USERNAME, ATIONET_PASSWORD, ATIONET_NETWORK_ID, ATIONET_NETWORK_NAME, ATIONET_ENTITY_TYPE, ATIONET_BASE_URL } = process.env;
-
-  if (!ATIONET_USERNAME || !ATIONET_PASSWORD || !ATIONET_NETWORK_ID || !ATIONET_NETWORK_NAME) {
-    throw new Error("Missing Ationet credentials in environment variables");
-  }
-
+async function fetchFreshToken(config: AtiConfig): Promise<TokenCache> {
   const entity = JSON.stringify({
-    Id: ATIONET_NETWORK_ID,
-    Name: ATIONET_NETWORK_NAME,
-    Type: ATIONET_ENTITY_TYPE ?? "N",
+    Id: config.networkId,
+    Name: config.networkName,
+    Type: config.entityType || "N",
   });
 
   const body = new URLSearchParams({
     grant_type: "password",
-    username: ATIONET_USERNAME,
-    password: ATIONET_PASSWORD,
+    username: config.username,
+    password: config.password,
     entity,
   });
 
-  const res = await fetch(`${ATIONET_BASE_URL}/Token`, {
+  const res = await fetch(`${config.baseUrl}/Token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
