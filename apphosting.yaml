@@ -24,7 +24,9 @@ env:
       - RUNTIME
 
   - variable: ATIONET_ENTITY_TYPE
-    value: "N"
+    # La API de ATIONet espera el tipo de entidad como palabra completa
+    # ("Network", "Company", …), NO la inicial "N".
+    value: "Network"
     availability:
       - RUNTIME
 

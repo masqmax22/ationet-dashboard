@@ -30,11 +30,50 @@ export function invalidateToken(config: AtiConfig): void {
   cacheMap.delete(cacheKey(config));
 }
 
+/** Entidad (red/compañía) a la que tiene acceso un usuario. */
+export interface AtiEntity {
+  Id: string;
+  Name: string;
+  Type: string;
+  RoleName?: string;
+}
+
+/**
+ * Paso 1 del flujo de token: autentica SIN entity y devuelve la lista de
+ * entidades asociadas al usuario (cada una con su Id/Name/Type correctos).
+ */
+export async function fetchUserEntities(
+  baseUrl: string,
+  username: string,
+  password: string
+): Promise<AtiEntity[]> {
+  const body = new URLSearchParams({ grant_type: "password", username, password });
+
+  const res = await fetch(`${baseUrl}/Token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Ationet auth failed [${res.status}]: ${text}`);
+  }
+
+  const data = await res.json();
+  const raw = data?.entities;
+  if (!raw) return [];
+
+  // ATIONet devuelve "entities" como string JSON (a veces ya como array).
+  const arr = typeof raw === "string" ? JSON.parse(raw) : raw;
+  return Array.isArray(arr) ? (arr as AtiEntity[]) : [];
+}
+
 async function fetchFreshToken(config: AtiConfig): Promise<TokenCache> {
   const entity = JSON.stringify({
     Id: config.networkId,
     Name: config.networkName,
-    Type: config.entityType || "N",
+    Type: config.entityType || "Network",
   });
 
   const body = new URLSearchParams({

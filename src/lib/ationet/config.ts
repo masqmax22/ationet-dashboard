@@ -23,7 +23,8 @@ export interface AtiConfigPublic {
 export const SESSION_COOKIE = "ationet_session";
 
 const DEFAULT_BASE_URL = "https://api.ationet.com";
-const DEFAULT_ENTITY_TYPE = "N";
+// ATIONet espera el tipo de entidad como palabra completa ("Network", "Company", …).
+const DEFAULT_ENTITY_TYPE = "Network";
 
 /** Config desde variables de entorno (el default del despliegue). */
 export function getEnvConfig(): AtiConfig | null {

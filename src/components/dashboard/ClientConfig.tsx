@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2, Plus, Pencil, Trash2, CheckCircle2, XCircle, Eye, EyeOff,
-  Zap, Server, ShieldAlert, Loader2, RotateCcw, Save, PlugZap,
+  Zap, Server, ShieldAlert, Loader2, RotateCcw, Save, PlugZap, Search, Network,
 } from "lucide-react";
 import {
   loadProfiles, saveProfiles, emptyProfile, type ClientProfile,
@@ -18,6 +18,14 @@ interface AtiConfigPublic {
   networkName: string;
   baseUrl: string;
   entityType: string;
+}
+
+/** Entidad (red/compañía) devuelta por /api/entities. */
+interface Entity {
+  Id: string;
+  Name: string;
+  Type: string;
+  RoleName?: string;
 }
 
 const inputCls =
@@ -43,7 +51,9 @@ export function ClientConfig() {
   const [editing, setEditing] = useState<ClientProfile | null>(null);
   const [showPass, setShowPass] = useState(false);
   const [msg, setMsg] = useState<Msg>(null);
-  const [busy, setBusy] = useState<string | null>(null); // "activate:<id>" | "test" | "save" | "reset"
+  const [busy, setBusy] = useState<string | null>(null); // "activate:<id>" | "test" | "save" | "reset" | "discover"
+  const [entities, setEntities] = useState<Entity[] | null>(null);
+  const [entityFilter, setEntityFilter] = useState("");
 
   const refreshActive = useCallback(async () => {
     try {
@@ -113,6 +123,57 @@ export function ClientConfig() {
     }
   }
 
+  async function discover() {
+    if (!editing) return;
+    if (!editing.username.trim() || !editing.password) {
+      setMsg({ type: "err", text: "Cargá usuario y contraseña para buscar las redes." });
+      return;
+    }
+    setBusy("discover");
+    setMsg(null);
+    setEntities(null);
+    setEntityFilter("");
+    try {
+      const res = await fetch("/api/entities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: editing.username,
+          password: editing.password,
+          baseUrl: editing.baseUrl,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg({ type: "err", text: data.detail || data.error || "No se pudieron obtener las redes." });
+        return;
+      }
+      const list: Entity[] = data.entities ?? [];
+      setEntities(list);
+      if (list.length === 0) {
+        setMsg({ type: "info", text: "El usuario autenticó pero no tiene redes asociadas." });
+      } else {
+        setMsg({ type: "ok", text: `Se encontraron ${list.length} red(es). Elegí una para autocompletar.` });
+      }
+    } catch (e) {
+      setMsg({ type: "err", text: (e as Error).message });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function pickEntity(e: Entity) {
+    if (!editing) return;
+    setEditing({
+      ...editing,
+      networkId: e.Id,
+      networkName: e.Name,
+      entityType: e.Type || "Network",
+      name: editing.name.trim() || e.Name,
+    });
+    setMsg({ type: "info", text: `Red seleccionada: ${e.Name}. Probá la conexión o guardá.` });
+  }
+
   async function resetToEnv() {
     setBusy("reset");
     setMsg(null);
@@ -145,6 +206,7 @@ export function ClientConfig() {
     persist(list);
     setEditing(null);
     setShowPass(false);
+    setEntities(null);
     if (thenActivate) {
       activate(profile);
     } else {
@@ -240,7 +302,7 @@ export function ClientConfig() {
           </div>
           {!editing && (
             <button
-              onClick={() => { setEditing(emptyProfile()); setShowPass(false); setMsg(null); }}
+              onClick={() => { setEditing(emptyProfile()); setShowPass(false); setMsg(null); setEntities(null); }}
               className="flex items-center gap-2 bg-[#116dff] hover:bg-[#0f5ee8] text-white text-xs font-medium rounded-lg px-3 py-2 shadow-sm transition-colors"
             >
               <Plus className="h-3.5 w-3.5" /> Nuevo perfil
@@ -287,7 +349,7 @@ export function ClientConfig() {
                     {isActive ? "Activo" : "Activar"}
                   </button>
                   <button
-                    onClick={() => { setEditing({ ...p }); setShowPass(false); setMsg(null); }}
+                    onClick={() => { setEditing({ ...p }); setShowPass(false); setMsg(null); setEntities(null); }}
                     className="flex items-center justify-center w-7 h-7 rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors"
                     title="Editar"
                   >
@@ -339,6 +401,78 @@ export function ClientConfig() {
               </div>
             </div>
 
+            {/* Descubrir redes del usuario */}
+            <div className="sm:col-span-2">
+              <div className="flex items-center justify-between gap-3 bg-blue-50/60 border border-blue-100 rounded-lg px-3 py-2.5">
+                <div className="flex items-center gap-2 text-xs text-blue-800">
+                  <Network className="h-3.5 w-3.5 shrink-0" />
+                  <span>¿No sabés el Network ID? Buscá las redes de este usuario y elegí una.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={discover}
+                  disabled={busy === "discover"}
+                  className="flex items-center gap-1.5 text-xs font-medium text-white bg-[#116dff] hover:bg-[#0f5ee8] rounded-lg px-3 py-1.5 shrink-0 transition-colors disabled:opacity-60"
+                >
+                  {busy === "discover" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                  Buscar mis redes
+                </button>
+              </div>
+
+              {entities && entities.length > 0 && (() => {
+                const q = entityFilter.trim().toLowerCase();
+                const matches = q
+                  ? entities.filter(e => e.Name.toLowerCase().includes(q) || e.Id.toLowerCase().includes(q))
+                  : entities;
+                const shown = matches.slice(0, 50);
+                return (
+                <div className="mt-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <input
+                        className={inputCls + " pl-8"}
+                        placeholder={`Filtrar ${entities.length} redes...`}
+                        value={entityFilter}
+                        onChange={e => setEntityFilter(e.target.value)}
+                      />
+                    </div>
+                    <span className="text-[11px] text-muted-foreground shrink-0">
+                      {matches.length} resultado{matches.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="max-h-52 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                  {shown.map(ent => {
+                    const selected = ent.Id === editing.networkId;
+                    return (
+                      <button
+                        key={ent.Id}
+                        type="button"
+                        onClick={() => pickEntity(ent)}
+                        className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-slate-50 transition-colors ${selected ? "bg-blue-50/60" : ""}`}
+                      >
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm text-foreground truncate">{ent.Name}</span>
+                          <span className="block text-[10px] text-muted-foreground font-mono truncate">
+                            {ent.Type}{ent.RoleName ? ` · ${ent.RoleName}` : ""} · {ent.Id}
+                          </span>
+                        </span>
+                        {selected && <CheckCircle2 className="h-4 w-4 text-[#116dff] shrink-0" />}
+                      </button>
+                    );
+                  })}
+                  </div>
+                  {matches.length > shown.length && (
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
+                      Mostrando {shown.length} de {matches.length}. Afiná el filtro para ver más.
+                    </p>
+                  )}
+                </div>
+                );
+              })()}
+            </div>
+
             <div>
               <label className={labelCls}>Network ID</label>
               <input className={inputCls} placeholder="GUID de la red" autoComplete="off"
@@ -386,7 +520,7 @@ export function ClientConfig() {
               <Zap className="h-3.5 w-3.5" /> Guardar y activar
             </button>
             <button
-              onClick={() => { setEditing(null); setShowPass(false); }}
+              onClick={() => { setEditing(null); setShowPass(false); setEntities(null); }}
               className="text-xs text-muted-foreground hover:text-foreground px-3 py-2"
             >
               Cancelar

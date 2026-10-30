@@ -23,8 +23,12 @@ navegador).
   identifica la red: `{ Id, Name, Type }`. El token se cachea en memoria del
   servidor y se renueva automáticamente ~60 s antes de expirar.
 - **Entidad / red:** definida por las variables `ATIONET_NETWORK_ID` (Id),
-  `ATIONET_NETWORK_NAME` (Name) y `ATIONET_ENTITY_TYPE` (Type, por defecto `N`
-  = network). Todo lo que se ve en el dashboard corresponde a **esa única red**.
+  `ATIONET_NETWORK_NAME` (Name) y `ATIONET_ENTITY_TYPE` (Type). El `Type` va como
+  **palabra completa**: `Network` (red) o `Company` (compañía) — **no** la inicial
+  `N`. Todo lo que se ve en el dashboard corresponde a **esa única red**.
+- **Descubrir la entidad:** si se autentica **sin** `entity`, la respuesta del
+  `/Token` incluye la lista de redes del usuario (Id/Name/Type). La pantalla de
+  Configuración usa esto en "Buscar mis redes" (ver §7).
 - **Credenciales solo del lado servidor:** las llamadas a ATIONet se hacen desde
   las *API routes* de Next.js (`/api/...`), que actúan como proxy. El navegador
   nunca ve usuario, contraseña ni token.
@@ -43,6 +47,7 @@ navegador).
 | `GET /api/reconciliation` | `GET /LitersWidget` + `GET /Transactions` | Tabla de reconciliación |
 | `GET /api/tanks/deliveries` | `GET /Transactions` | Reservado para integración FMS (no usado en UI aún) |
 | `GET /api/tanks/readings` | `GET /Sites` | Reservado para integración FMS (no usado en UI aún) |
+| `POST /api/session` / `POST /api/entities` | `POST /Token` | Config multi-cliente: activar/validar y descubrir redes |
 
 ---
 
@@ -289,6 +294,8 @@ dashboard a una red ATIONet u otra sin re-desplegar**, administrando varios
 ### 7.2 Acciones disponibles
 
 - Crear / editar / eliminar perfiles.
+- **Buscar mis redes:** con usuario + contraseña, lista las redes a las que ese
+  usuario tiene acceso y autocompleta Network ID / Name / Type al elegir una.
 - Activar un perfil (cambia el cliente activo).
 - Probar conexión.
 - Volver a la configuración por defecto (entorno).
@@ -309,6 +316,7 @@ dashboard a una red ATIONet u otra sin re-desplegar**, administrando varios
 | `GET /api/session` | Devuelve la config activa (sin contraseña) y su origen (`cookie`/`env`). |
 | `POST /api/session` | Valida un perfil; con `{test:true}` solo prueba, si no activa (setea la cookie). |
 | `DELETE /api/session` | Limpia la sesión → vuelve al default de entorno. |
+| `POST /api/entities` | Lista las redes de un usuario (login sin entity). No persiste. |
 
 La resolución de credenciales por request está en
 [`../src/lib/ationet/config.ts`](../src/lib/ationet/config.ts) (cookie → entorno),

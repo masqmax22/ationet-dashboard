@@ -46,6 +46,6 @@ export function emptyProfile(): ClientProfile {
     password: "",
     networkId: "",
     networkName: "",
-    entityType: "N",
+    entityType: "Network",
   };
 }

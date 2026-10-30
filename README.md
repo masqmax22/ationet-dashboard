@@ -44,7 +44,7 @@ React Query**, **Tailwind CSS 4** y componentes estilo shadcn/ui.
 | `ATIONET_NETWORK_ID`    |    Sí     | Id de la red (entidad).                       |
 | `ATIONET_NETWORK_NAME`  |    Sí     | Nombre de la red (entidad).                   |
 | `ATIONET_BASE_URL`      |    No     | Default `https://api.ationet.com`.            |
-| `ATIONET_ENTITY_TYPE`   |    No     | Tipo de entidad, default `N` (network).       |
+| `ATIONET_ENTITY_TYPE`   |    No     | Tipo de entidad (palabra completa), default `Network`. |
 
 ## Despliegue — Firebase App Hosting
 
