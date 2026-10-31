@@ -3,7 +3,7 @@
 import { MapPin, CheckCircle2, XCircle, Building2, Fuel, ReceiptText, Calendar, TrendingUp, Globe, ChevronDown } from "lucide-react";
 import type { AtiSite } from "@/lib/ationet/types";
 import type { SiteStats } from "@/hooks/useSiteStats";
-import { formatVolume, formatCurrency } from "@/lib/utils";
+import { formatVolume } from "@/lib/utils";
 
 interface Props {
   site:     AtiSite;

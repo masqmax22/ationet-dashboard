@@ -3,12 +3,12 @@
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { AtiPage, AtiTransaction } from "@/lib/ationet/types";
-import { formatVolume, formatCurrency, toISODate, daysAgo } from "@/lib/utils";
+import { formatVolume, toISODate, daysAgo } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search, Filter, ChevronLeft, ChevronRight,
-  ReceiptText, Fuel, DollarSign, Calendar,
-  ChevronDown, RefreshCw, Download,
+  ReceiptText, Fuel, Calendar,
+  ChevronDown, RefreshCw,
 } from "lucide-react";
 
 const PAGE_SIZE = 50;
@@ -95,7 +95,6 @@ export function TransactionList() {
 
   // Aggregates from current page
   const pageVolume = txs.reduce((s, t) => s + (t.FuelVolume ?? 0), 0);
-  const pageAmount = txs.reduce((s, t) => s + (t.TransactionAmount ?? 0), 0);
 
   return (
     <div className="space-y-5">
@@ -175,7 +174,7 @@ export function TransactionList() {
 
       {/* ── Summary KPIs (current page) ─────────── */}
       {txs.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="kpi-card !py-4">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg kpi-icon-blue shrink-0">
@@ -195,17 +194,6 @@ export function TransactionList() {
               <div>
                 <p className="text-lg font-bold text-foreground leading-none">{formatVolume(pageVolume)}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Volumen · pág. actual</p>
-              </div>
-            </div>
-          </div>
-          <div className="kpi-card !py-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg kpi-icon-amber shrink-0">
-                <DollarSign className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-lg font-bold text-foreground leading-none">{formatCurrency(pageAmount)}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Monto · pág. actual</p>
               </div>
             </div>
           </div>
@@ -239,7 +227,6 @@ export function TransactionList() {
                   <th className="text-left">Cod. Auth</th>
                   <th className="text-left">Combustible</th>
                   <th className="text-right">Volumen</th>
-                  <th className="text-right">Monto</th>
                   <th className="text-left">PAN / Vehículo</th>
                   <th className="text-center">Estado</th>
                 </tr>
@@ -269,12 +256,6 @@ export function TransactionList() {
                       </td>
                       <td className="text-right font-mono text-sm font-medium">
                         {formatVolume(tx.FuelVolume ?? 0)}
-                      </td>
-                      <td className="text-right font-mono text-sm">
-                        {formatCurrency(tx.TransactionAmount ?? 0)}
-                        {tx.CurrencyCode && (
-                          <span className="text-[10px] text-muted-foreground ml-1">{tx.CurrencyCode}</span>
-                        )}
                       </td>
                       <td>
                         <span className="font-mono text-xs text-muted-foreground">

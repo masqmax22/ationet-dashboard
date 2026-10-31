@@ -9,9 +9,9 @@ import { useLitersWidget, buildDaySeries, fuelCategoriesOf, litersTotal } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  AlertCircle, ReceiptText, Fuel, DollarSign, TrendingUp,
+  AlertCircle, ReceiptText, Fuel, TrendingUp,
 } from "lucide-react";
-import { formatVolume, formatCurrency } from "@/lib/utils";
+import { formatVolume } from "@/lib/utils";
 
 const ATIO_COLORS = ["#116dff", "#22c55e", "#f59e0b", "#8b5cf6", "#ef4444"];
 
@@ -71,8 +71,8 @@ export function TransactionSummary({ dateFrom, dateTo }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}
         </div>
         <Skeleton className="h-72 rounded-xl" />
       </div>
@@ -94,7 +94,7 @@ export function TransactionSummary({ dateFrom, dateTo }: Props) {
   return (
     <div className="space-y-4">
       {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KpiCard
           icon={Fuel}
           iconClass="kpi-icon-blue"
@@ -112,12 +112,6 @@ export function TransactionSummary({ dateFrom, dateTo }: Props) {
           iconClass="kpi-icon-blue"
           label="Transacciones (muestra · últimas 50)"
           value={(txData?.totalCount ?? 0).toLocaleString("es-AR")}
-        />
-        <KpiCard
-          icon={DollarSign}
-          iconClass="kpi-icon-amber"
-          label="Monto (muestra · últimas 50)"
-          value={formatCurrency(txData?.totalAmount ?? 0)}
         />
       </div>
 
