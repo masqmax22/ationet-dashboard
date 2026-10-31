@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { AtiLitersWidget, AtiTransaction } from "@/lib/ationet/types";
-import { buildDaySeries } from "./useLitersWidget";
+import { buildDaySeries, fuelCategoriesOf } from "./useLitersWidget";
 
 const FIVE_MINUTES = 5 * 60 * 1000;
 
@@ -56,12 +56,14 @@ async function fetchReconciliation(dateFrom: string, dateTo: string): Promise<Re
     await res.json();
 
   const daySeries = buildDaySeries(liters);
-  const fuelCategories = liters.Categories.slice(0, -1);
+  // "Total" puede no ser la última categoría → filtrar por nombre y usar su índice real.
+  const fuels = fuelCategoriesOf(liters);
+  const fuelCategories = fuels.map((f) => f.name);
 
   // Total dispatched per fuel
   const totalByFuel: Record<string, number> = {};
-  fuelCategories.forEach((cat, ci) => {
-    totalByFuel[cat] = (liters.Liters[ci] ?? []).reduce((a, b) => a + b, 0);
+  fuels.forEach((f) => {
+    totalByFuel[f.name] = (liters.Liters[f.index] ?? []).reduce((a, b) => a + b, 0);
   });
 
   // Build one row per fuel category (network-level, no FMS tank data)

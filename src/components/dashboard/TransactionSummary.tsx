@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, Legend,
 } from "recharts";
 import { useTransactionSummary } from "@/hooks/useTransactionSummary";
-import { useLitersWidget, buildDaySeries } from "@/hooks/useLitersWidget";
+import { useLitersWidget, buildDaySeries, fuelCategoriesOf, litersTotal } from "@/hooks/useLitersWidget";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -57,11 +57,16 @@ export function TransactionSummary({ dateFrom, dateTo }: Props) {
   const isLoading   = txQuery.isLoading || litersQuery.isLoading;
   const error       = txQuery.error || litersQuery.error;
 
-  const chartData  = litersQuery.data ? buildDaySeries(litersQuery.data) : [];
-  const fuelCats   = litersQuery.data?.Categories.slice(0, -1) ?? [];
-  const totalLiters = litersQuery.data
-    ? (litersQuery.data.Liters[litersQuery.data.Categories.length - 1] ?? []).reduce((a, b) => a + b, 0)
-    : 0;
+  const liters     = litersQuery.data;
+  const chartData  = liters ? buildDaySeries(liters) : [];
+  const fuelCats   = liters ? fuelCategoriesOf(liters).map(f => f.name) : [];
+  const totalLiters = liters ? litersTotal(liters) : 0;
+  const fuelTotals = liters
+    ? fuelCategoriesOf(liters)
+        .map(f => ({ name: f.name, total: (liters.Liters[f.index] ?? []).reduce((a, b) => a + b, 0) }))
+        .sort((a, b) => b.total - a.total)
+    : [];
+  const topFuel = fuelTotals[0];
 
   if (isLoading) {
     return (
@@ -91,27 +96,27 @@ export function TransactionSummary({ dateFrom, dateTo }: Props) {
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          icon={ReceiptText}
-          iconClass="kpi-icon-blue"
-          label="Transacciones en el período"
-          value={(txData?.totalCount ?? 0).toLocaleString("es-AR")}
-        />
-        <KpiCard
           icon={Fuel}
           iconClass="kpi-icon-blue"
-          label="Volumen despachado"
-          value={formatVolume(txData?.totalVolume ?? 0)}
+          label="Volumen despachado · últimos 30 días"
+          value={formatVolume(totalLiters)}
         />
         <KpiCard
           icon={TrendingUp}
           iconClass="kpi-icon-green"
-          label="Total últimos 29 días"
-          value={formatVolume(totalLiters)}
+          label={topFuel ? `${topFuel.name} · 30 días` : "Combustible principal"}
+          value={formatVolume(topFuel?.total ?? 0)}
+        />
+        <KpiCard
+          icon={ReceiptText}
+          iconClass="kpi-icon-blue"
+          label="Transacciones (muestra · últimas 50)"
+          value={(txData?.totalCount ?? 0).toLocaleString("es-AR")}
         />
         <KpiCard
           icon={DollarSign}
           iconClass="kpi-icon-amber"
-          label="Monto total del período"
+          label="Monto (muestra · últimas 50)"
           value={formatCurrency(txData?.totalAmount ?? 0)}
         />
       </div>
